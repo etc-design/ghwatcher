@@ -42,7 +42,7 @@ jobs:
 
       - name: Commit updated state.json (if changed)
         run: |
-          git config user.name "gafshub-watcher-bot"
+          git config user.name "ghwatcher"
           git config user.email "actions@users.noreply.github.com"
           git add state.json
           git diff --cached --quiet || git commit -m "Update seen-post state [skip ci]"
