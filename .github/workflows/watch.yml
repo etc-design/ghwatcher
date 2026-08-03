@@ -1,1 +1,49 @@
+name: GAFSHUB Watcher
 
+on:
+  schedule:
+    # Runs every 10 minutes. GitHub may delay scheduled runs by a few
+    # minutes during busy periods - this is normal and not a bug.
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}   # lets you trigger a run manually from the Actions tab
+
+permissions:
+  contents: write   # needed so the workflow can commit state.json back
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Generate config.json from secrets
+        env:
+          GAFSHUB_KEYWORDS: ${{ secrets.GAFSHUB_KEYWORDS }}
+          GAFSHUB_AUTH_COOKIE: ${{ secrets.GAFSHUB_AUTH_COOKIE }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_APP_PASSWORD: ${{ secrets.SMTP_APP_PASSWORD }}
+          FROM_ADDRESS: ${{ secrets.FROM_ADDRESS }}
+          TO_ADDRESS: ${{ secrets.TO_ADDRESS }}
+        run: python generate_config.py
+
+      - name: Run watcher
+        run: python watcher.py
+
+      - name: Commit updated state.json (if changed)
+        run: |
+          git config user.name "gafshub-watcher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add state.json
+          git diff --cached --quiet || git commit -m "Update seen-post state [skip ci]"
+          git push
