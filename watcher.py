@@ -137,7 +137,11 @@ def search_keyword(base_url: str, keyword: str, auth_cookie: str = "") -> list:
         "Referer": base_url + "/",
     }
     if auth_cookie and auth_cookie != "paste-your-full-cookie-header-here":
-        headers["Cookie"] = auth_cookie
+        # Strip any stray newlines/carriage returns/whitespace - these can sneak in
+        # from copy-pasting (browser dev tools, GitHub secrets, etc.) and HTTP
+        # headers cannot contain raw newline characters.
+        clean_cookie = auth_cookie.replace("\n", "").replace("\r", "").strip()
+        headers["Cookie"] = clean_cookie
 
     try:
         resp = get_scraper().get(url, headers=headers, timeout=REQUEST_TIMEOUT)
