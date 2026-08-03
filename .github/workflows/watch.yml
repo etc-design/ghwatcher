@@ -2,9 +2,9 @@ name: GAFSHUB Watcher
 
 on:
   schedule:
-    # Runs every 10 minutes. GitHub may delay scheduled runs by a few
+    # Runs every 5 minutes. GitHub may delay scheduled runs by a few
     # minutes during busy periods - this is normal and not a bug.
-    - cron: "*/10 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch: {}   # lets you trigger a run manually from the Actions tab
 
 permissions:
