@@ -2,13 +2,18 @@ name: GAFSHUB Watcher
 
 on:
   schedule:
-    # Runs every 5 minutes. GitHub may delay scheduled runs by a few
-    # minutes during busy periods - this is normal and not a bug.
-    - cron: "*/5 * * * *"
-  workflow_dispatch: {}   # lets you trigger a run manually from the Actions tab
+    # Backup only - GitHub's own scheduler can be unreliably delayed by
+    # hours, so the primary trigger is an external cron service (see
+    # CLOUD_SETUP.md) calling workflow_dispatch below instead.
+    - cron: "0 * * * *"
+  workflow_dispatch: {}   # triggered externally by cron-job.org for reliable timing
 
 permissions:
   contents: write   # needed so the workflow can commit state.json back
+
+concurrency:
+  group: gafshub-watcher
+  cancel-in-progress: true
 
 jobs:
   check:
@@ -42,7 +47,7 @@ jobs:
 
       - name: Commit updated state.json (if changed)
         run: |
-          git config user.name "ghwatcher"
+          git config user.name "gafshub-watcher-bot"
           git config user.email "actions@users.noreply.github.com"
           git add state.json
           git diff --cached --quiet || git commit -m "Update seen-post state [skip ci]"
